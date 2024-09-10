@@ -1,0 +1,4 @@
+discord
+python-dotenv
+SQLAlchemy
+parcel_tw @ git+https://github.com/ryanycs/parcel_tw@main
