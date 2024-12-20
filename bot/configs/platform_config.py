@@ -1,5 +1,12 @@
 from parcel_tw import Platform
 
+PLATFORM = [
+    "seven_eleven",
+    "family_mart",
+    "ok_mart",
+    "shopee",
+]
+
 platform_to_id = {"seven_eleven": 1, "family_mart": 2, "ok_mart": 3, "shopee": 4}
 
 platform_to_enum = {

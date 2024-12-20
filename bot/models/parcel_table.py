@@ -59,6 +59,19 @@ class ParcelTable:
             logging.error(f"Error getting data: {e}")
             raise RuntimeError("Error getting parcel")
 
+    def get_status(self, order_id, platform_id):
+        try:
+            self.db.cursor.execute(
+                """
+            SELECT status FROM parcels WHERE order_id = ? AND platform_id = ?;""",
+                (order_id, platform_id),
+            )
+            tuple = self.db.cursor.fetchone()
+            return tuple[0] if tuple else None
+        except Exception as e:
+            logging.error(f"Error getting data: {e}")
+            raise RuntimeError("Error getting parcel")
+
     def update(self, order_id, platform_id, status):
         try:
             self.db.cursor.execute(
@@ -68,6 +81,7 @@ class ParcelTable:
             """,
                 (status, order_id, platform_id),
             )
+            # self.db.conn.commit()
         except Exception as e:
             logging.error(f"Error updating data: {e}")
             raise RuntimeError("Error updating parcel")

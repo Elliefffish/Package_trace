@@ -1,15 +1,7 @@
-import os
-import logging
-
-from dotenv import load_dotenv
 from bot import bot
-
-load_dotenv()
-DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
-
-if not DISCORD_BOT_TOKEN:
-    logging.error("DISCORD_BOT_TOKEN is not set")
-    raise ValueError("DISCORD_BOT_TOKEN is not set")
+from bot.utils import get_discord_bot_token, get_log_handler
 
 if __name__ == "__main__":
-    bot.run(DISCORD_BOT_TOKEN)
+    handler = get_log_handler()
+    token = get_discord_bot_token()
+    bot.run(token=token, log_handler=handler, root_logger=True)

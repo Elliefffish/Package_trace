@@ -53,9 +53,33 @@ class SubscriptionTable:
             logging.error(f"Error getting data: {e}")
             raise RuntimeError("Error getting subscription")
 
+    def get_who(self, order_id: str, platform_id: int):
+        try:
+            self.db.cursor.execute(
+                """
+            SELECT user_id FROM subscriptions
+            WHERE order_id = ? AND platform_id = ?;
+            """,
+                (order_id, platform_id),
+            )
+            return self.db.cursor.fetchall()
+        except Exception as e:
+            logging.error(f"Error getting data: {e}")
+            raise RuntimeError("Error getting subscription")
+
     def get_all(self):
         try:
             self.db.cursor.execute("SELECT * FROM subscriptions;")
+            return self.db.cursor.fetchall()
+        except Exception as e:
+            logging.error(f"Error getting data: {e}")
+            raise RuntimeError("Error getting all subscriptions")
+
+    def get_limit(self, limit: int, offset: int):
+        try:
+            self.db.cursor.execute(
+                "SELECT * FROM subscriptions LIMIT ? OFFSET ?;", (limit, offset)
+            )
             return self.db.cursor.fetchall()
         except Exception as e:
             logging.error(f"Error getting data: {e}")

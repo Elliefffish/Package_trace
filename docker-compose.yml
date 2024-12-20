@@ -1,0 +1,8 @@
+version: "3"
+services:
+  bot:
+    build: .
+    container_name: parcel-track-bot
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
