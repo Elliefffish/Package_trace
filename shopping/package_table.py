@@ -1,3 +1,4 @@
+import sqlite3
 
 def create_db():
   conn = sqlite3.connect('shopping.db')
@@ -8,6 +9,7 @@ def create_db():
       id VARCHAR(32) PRIMARY KEY, 
       name VARCHAR(128) NOT NULL,
       price INTEGER NOT NULL,
+      img TEXT NOT NULL,
       description TEXT)''')
   
   # Create Package table
@@ -15,6 +17,7 @@ def create_db():
       id VARCHAR(32) PRIMARY KEY,
       place VARCHAR(128) NOT NULL,
       status VARCHAR(64) NOT NULL,
-      status_time DATETIME DEFAULT CURRENT_TIMESTAMP, -- Use DEFAULT for status_time)''')
+      status_time DATETIME DEFAULT CURRENT_TIMESTAMP)''')
   conn.commit()
   conn.close()
+create_db()
