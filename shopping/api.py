@@ -1,7 +1,9 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import sqlite3
-from typing import List
+from typing import List, Optional
+from datetime import datetime
+import uvicorn
 
 # 初始化 FastAPI 應用
 app = FastAPI()
@@ -16,7 +18,7 @@ class Package(BaseModel):
     # 狀態
     status: str
     # 狀態時間
-    status_time: str
+    status_time: Optional[datetime] = None
 
 # connect sqlite
 def get_db_connection():
@@ -32,8 +34,8 @@ def create_package(package: Package):
     try:
         cursor.execute(
             # first column : id -> auto
-            "INSERT INTO Packages (id, place, status, status_time) VALUES (?, ?, ?, ?)",
-            (package.id, package.place, package.status, package.status_time),
+            "INSERT INTO Packages (id, place, status) VALUES (?, ?, ?)",
+            (package.id, package.place, package.status)
         )
         connection.commit()
     except sqlite3.IntegrityError:
@@ -81,3 +83,5 @@ def list_packages():
         for package in packages
     ]
 
+if __name__ == '__main__':
+    uvicorn.run(app='api:app', host='127.0.0.1', port=8000, reload=True)
