@@ -15,7 +15,7 @@ def insert_package(place, status_time, status, goods_id):
   c.execute("INSERT INTO Package (place, status_time, status, goods_id) VALUES (?, ?, ?, ?)", (place, status_time, status, goods_id))
   return c.lastrowid
 
-package_table.create_db()
+#package_table.create_db()
 insert_goods('apple', 10, 'red')
 insert_goods('banana', 20, 'yellow')
 insert_goods('orange', 30, 'orange')
