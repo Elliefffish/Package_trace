@@ -18,8 +18,9 @@ class Package(BaseModel):
     status: str
     # 狀態時間
     status_time: Optional[datetime] = None
-    #
-    good_id: int
+
+    good_id: Optional[int] = None
+    good_name: Optional[str] = None
 
 class Good(BaseModel):
     # 商品編號
@@ -59,15 +60,19 @@ def create_package(package: Package):
     return package
 
 
-# Get pakages search 
-@app.get("/packages/{id}", response_model=Package)
-def get_package(id: str):
+# Get packages search
+@app.get("/packages/{package_id}", response_model=Package)
+def get_package(package_id: int):
     connection = get_db_connection()
     cursor = connection.cursor()
-    package = cursor.execute(
-        "SELECT package_id, place, status, status_time, good_id FROM Packages WHERE package_id = ?",
-        (package_id,),
-    ).fetchone()
+
+    package = cursor.execute('''
+        SELECT p.package_id, p.place, p.status, p.status_time, g.name AS good_name
+        FROM Packages p
+        LEFT JOIN Goods g ON p.good_id = g.good_id
+        WHERE p.package_id = ?
+      ''', (package_id,)).fetchone()
+
     connection.close()
     if package is None:
         raise HTTPException(status_code=404, detail="Package not found.")
@@ -76,40 +81,48 @@ def get_package(id: str):
         "place": package["place"],
         "status": package["status"],
         "status_time": package["status_time"],
-        "good_id": package["good_id"],
+        #"good_id": package["good_id"],
+        "good_name": package["good_name"],
     }
 
 
-# search all
+# search all packages
 @app.get("/packages", response_model=List[Package])
 def list_packages():
     connection = get_db_connection()
     cursor = connection.cursor()
-    packages = cursor.execute(
-        "SELECT package_id, place, status, status_time, good_id FROM Packages"
-    ).fetchall()
+    packages = cursor.execute('''
+        SELECT p.package_id, p.place, p.status, p.status_time, g.name AS good_name
+        FROM Packages p
+        LEFT JOIN Goods g ON p.good_id = g.good_id
+    ''').fetchall()
     connection.close()
+
+    #for package in packages:
+    #    print(dict(package))
+
+
     return [
         {
             "package_id": package["package_id"],
             "place": package["place"],
             "status": package["status"],
-            "status_time": package["status_time"],
-            "good_id": package["good_id"],
+            "status_time": package["status_time"], 
+            #"good_id": package["good_id"],
+            "good_name": package["good_name"],
         }
         for package in packages
     ]
 
-# Post packages 測試: insert 包裹資料
+# Post goods 測試: insert 商品資料
 @app.post("/goods", response_model=Good)
 def create_good(good: Good):
     connection = get_db_connection()
     cursor = connection.cursor()
     try:
         cursor.execute(
-            # first column : id -> auto
-            "INSERT INTO Goods (good_id, name, price, img, description) VALUES (?, ?, ?, ?, ?)",
-            (good.good_id, good.name, good.price, good.img, good.description)
+            "INSERT INTO Goods (name, price, img, description) VALUES (?, ?, ?, ?)",
+            (good.name, good.price, good.img, good.description)
         )
         connection.commit()
     except sqlite3.IntegrityError:
@@ -119,14 +132,14 @@ def create_good(good: Good):
     return good
 
 
-# Get goods
-@app.get("/goods/{id}", response_model=Good)
-def get_good(good_id: str):
+# Get good
+@app.get("/goods/{good_id}", response_model=Good)
+def get_good(good_id: int):
     connection = get_db_connection()
     cursor = connection.cursor()
     good = cursor.execute(
-        "SELECT good_id, name, price, img, description FROM Goods WHERE id = ?",
-        (good_id,),
+        "SELECT good_id, name, price, img, description FROM Goods WHERE good_id = ?",
+        (good_id,)
     ).fetchone()
     connection.close()
     if good is None:
@@ -141,7 +154,7 @@ def get_good(good_id: str):
 
 # Get all goods
 @app.get("/goods", response_model=List[Good])
-def list_good():
+def list_goods():
     connection = get_db_connection()
     cursor = connection.cursor()
     goods = cursor.execute(
@@ -158,7 +171,6 @@ def list_good():
         }
         for good in goods
     ]
-
 
 
 if __name__ == '__main__':
