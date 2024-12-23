@@ -11,17 +11,19 @@ app = FastAPI()
 # model
 class Package(BaseModel):
     # 訂單編號
-    id: str
+    package_id: Optional[int] = None
     # 取貨門市
     place: str
     # 狀態
     status: str
     # 狀態時間
     status_time: Optional[datetime] = None
+    #
+    good_id: int
 
 class Good(BaseModel):
     # 商品編號
-    id: str
+    good_id: Optional[int] = None
     # 商品名稱
     name: str
     # 價格
@@ -46,8 +48,8 @@ def create_package(package: Package):
     try:
         cursor.execute(
             # first column : id -> auto
-            "INSERT INTO Packages (id, place, status) VALUES (?, ?, ?)",
-            (package.id, package.place, package.status)
+            "INSERT INTO Packages (place, status, good_id) VALUES (?, ?, ?)",
+            (package.place, package.status, package.good_id)
         )
         connection.commit()
     except sqlite3.IntegrityError:
@@ -63,17 +65,18 @@ def get_package(id: str):
     connection = get_db_connection()
     cursor = connection.cursor()
     package = cursor.execute(
-        "SELECT id, place, status, status_time FROM Packages WHERE id = ?",
-        (id,),
+        "SELECT package_id, place, status, status_time, good_id FROM Packages WHERE package_id = ?",
+        (package_id,),
     ).fetchone()
     connection.close()
     if package is None:
         raise HTTPException(status_code=404, detail="Package not found.")
     return {
-        "id": package["id"],
+        "package_id": package["package_id"],
         "place": package["place"],
         "status": package["status"],
         "status_time": package["status_time"],
+        "good_id": package["good_id"],
     }
 
 
@@ -83,15 +86,16 @@ def list_packages():
     connection = get_db_connection()
     cursor = connection.cursor()
     packages = cursor.execute(
-        "SELECT id, place, status, status_time FROM Packages"
+        "SELECT package_id, place, status, status_time, good_id FROM Packages"
     ).fetchall()
     connection.close()
     return [
         {
-            "id": package["id"],
+            "package_id": package["package_id"],
             "place": package["place"],
             "status": package["status"],
             "status_time": package["status_time"],
+            "good_id": package["good_id"],
         }
         for package in packages
     ]
@@ -104,8 +108,8 @@ def create_good(good: Good):
     try:
         cursor.execute(
             # first column : id -> auto
-            "INSERT INTO Goods (id, name, price, img, description) VALUES (?, ?, ?, ?, ?)",
-            (good.id, good.name, good.price, good.img, good.description)
+            "INSERT INTO Goods (good_id, name, price, img, description) VALUES (?, ?, ?, ?, ?)",
+            (good.good_id, good.name, good.price, good.img, good.description)
         )
         connection.commit()
     except sqlite3.IntegrityError:
@@ -117,18 +121,18 @@ def create_good(good: Good):
 
 # Get goods
 @app.get("/goods/{id}", response_model=Good)
-def get_good(id: str):
+def get_good(good_id: str):
     connection = get_db_connection()
     cursor = connection.cursor()
     good = cursor.execute(
-        "SELECT id, name, price, img, description FROM Goods WHERE id = ?",
-        (id,),
+        "SELECT good_id, name, price, img, description FROM Goods WHERE id = ?",
+        (good_id,),
     ).fetchone()
     connection.close()
     if good is None:
         raise HTTPException(status_code=404, detail="Good not found.")
     return {
-        "id": good["id"],
+        "good_id": good["good_id"],
         "name": good["name"],
         "price": good["price"],
         "img": good["img"],
@@ -141,12 +145,12 @@ def list_good():
     connection = get_db_connection()
     cursor = connection.cursor()
     goods = cursor.execute(
-        "SELECT id, name, price, img, description FROM Goods"
+        "SELECT good_id, name, price, img, description FROM Goods"
     ).fetchall()
     connection.close()
     return [
         {
-            "id": good["id"],
+            "good_id": good["good_id"],
             "name": good["name"],
             "price": good["price"],
             "img": good["img"],
