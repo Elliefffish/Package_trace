@@ -6,7 +6,7 @@ def create_db():
   
   # Create Goods table
   c.execute('''CREATE TABLE IF NOT EXISTS Goods(
-      id VARCHAR(32) PRIMARY KEY, 
+      good_id INTEGER PRIMARY KEY AUTOINCREMENT, 
       name VARCHAR(128) NOT NULL,
       price INTEGER NOT NULL,
       img TEXT NOT NULL,
@@ -14,10 +14,13 @@ def create_db():
   
   # Create Package table
   c.execute('''CREATE TABLE IF NOT EXISTS Packages(
-      id VARCHAR(32) PRIMARY KEY,
+      package_id INTEGER PRIMARY KEY AUTOINCREMENT,
       place VARCHAR(128) NOT NULL,
       status VARCHAR(64) NOT NULL,
-      status_time DATETIME DEFAULT CURRENT_TIMESTAMP)''')
+      status_time DATETIME DEFAULT (datetime('now', 'localtime')),
+      good_id INTEGER,
+      FOREIGN KEY (good_id) REFERENCES Goods(good_id)
+  )''')
   conn.commit()
   conn.close()
 create_db()
