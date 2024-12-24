@@ -15,7 +15,7 @@ class Package(BaseModel):
     # 取貨門市
     place: str
     # 狀態
-    status: str
+    status: Optional[str] = None
     # 狀態時間
     status_time: Optional[datetime] = None
 
@@ -34,6 +34,15 @@ class Good(BaseModel):
     # 介紹
     description: str
 
+class Status(BaseModel):
+    status_id: Optional[int] = None
+    status: str
+    status_time: Optional[datetime] = None
+    package_id: int
+
+class PackageStatus(BaseModel):
+    package: Package
+    status: Status
 
 # connect sqlite
 def get_db_connection():
@@ -41,7 +50,13 @@ def get_db_connection():
     connection.row_factory = sqlite3.Row
     return connection
 
-# Post packages 測試: insert 包裹資料
+# Post packages 測試: insert 包裹資料i
+'''
+{
+    "place": "A",
+    "good_id": 1 
+}
+'''
 @app.post("/packages", response_model=Package)
 def create_package(package: Package):
     connection = get_db_connection()
@@ -49,8 +64,8 @@ def create_package(package: Package):
     try:
         cursor.execute(
             # first column : id -> auto
-            "INSERT INTO Packages (place, status, good_id) VALUES (?, ?, ?)",
-            (package.place, package.status, package.good_id)
+            "INSERT INTO Packages (place, good_id) VALUES (?, ?)",
+            (package.place, package.good_id)
         )
         connection.commit()
     except sqlite3.IntegrityError:
@@ -58,6 +73,33 @@ def create_package(package: Package):
     finally:
         connection.close()
     return package
+'''
+{
+    "status": "送達",
+    "package_id": "1"
+}
+'''
+@app.post("/status", response_model=Status)
+def update_status(status: Status):
+    connection = get_db_connection()
+    cursor = connection.cursor()
+    try:
+        # check
+        cursor.execute("SELECT 1 FROM Packages WHERE package_id = ?", (status.package_id,))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=404, detail="Package ID not found.")
+
+        # insert new status
+        cursor.execute(
+            "INSERT INTO Status (status, package_id) VALUES (?, ?)",(status.status,status.package_id))
+        
+        connection.commit()
+    except sqlite3.IntegrityError as e:
+        connection.rollback()
+        raise HTTPException(status_code=400, detail="Failed to update status.") from e
+    finally:
+        connection.close()
+    return status
 
 
 # Get packages search
@@ -67,23 +109,46 @@ def get_package(package_id: int):
     cursor = connection.cursor()
 
     package = cursor.execute('''
-        SELECT p.package_id, p.place, p.status, p.status_time, g.name AS good_name
+        SELECT p.package_id, p.place, p.good_id, g.name AS good_name
         FROM Packages p
         LEFT JOIN Goods g ON p.good_id = g.good_id
         WHERE p.package_id = ?
-      ''', (package_id,)).fetchone()
+    ''', (package_id,)).fetchone()
 
-    connection.close()
     if package is None:
         raise HTTPException(status_code=404, detail="Package not found.")
-    return {
-        "package_id": package["package_id"],
-        "place": package["place"],
-        "status": package["status"],
-        "status_time": package["status_time"],
-        #"good_id": package["good_id"],
-        "good_name": package["good_name"],
+    
+    package_dict = {
+        "package_id": package[0],
+        "place": package[1],
+        "good_id": package[2],
+        "good_name": package[3]
     }
+
+    statuses = cursor.execute('''
+        SELECT status, status_time
+        FROM Status
+        WHERE package_id = ?
+        ORDER BY status_time DESC
+    ''', (package_id, )).fetchall()
+
+    
+    if statuses:
+        package_dict["status"] = statuses[0][0]  
+        package_dict["status_time"] = statuses[0][1]  
+    else:
+        package_dict["status"] = None
+        package_dict["status_time"] = None
+    
+    '''
+    if statuses:
+        package_dict["statuses"] = [{"status": status[0], "status_time": status[1]} for status in statuses]
+    else:
+        package_dict["statuses"] = []
+    '''
+    connection.close()
+
+    return package_dict
 
 
 # search all packages
@@ -92,28 +157,86 @@ def list_packages():
     connection = get_db_connection()
     cursor = connection.cursor()
     packages = cursor.execute('''
-        SELECT p.package_id, p.place, p.status, p.status_time, g.name AS good_name
+        SELECT p.package_id, p.place, p.good_id, g.name AS good_name
         FROM Packages p
         LEFT JOIN Goods g ON p.good_id = g.good_id
     ''').fetchall()
-    connection.close()
 
     #for package in packages:
     #    print(dict(package))
-
-
-    return [
-        {
-            "package_id": package["package_id"],
-            "place": package["place"],
-            "status": package["status"],
-            "status_time": package["status_time"], 
-            #"good_id": package["good_id"],
-            "good_name": package["good_name"],
+    package_list = []
+    for package in packages:
+        package_dict = {
+            "package_id": package[0],
+            "place": package[1],
+            "good_id": package[2],
+            "good_name": package[3]
         }
-        for package in packages
-    ]
 
+        statuses = cursor.execute('''
+            SELECT status, status_time
+            FROM Status
+            WHERE package_id = ?
+            ORDER BY status_time DESC
+        ''', (package[0],)).fetchall()
+        '''
+        if statuses:  
+            package_dict["status"] = statuses[0]
+            package_dict["status_time"] = statuses[1]
+        else:  
+            package_dict["status"] = None
+            package_dict["status_time"] = None
+        '''       
+        
+        if statuses:
+            package_dict["statuses"] = [{"status": status[0], "status_time": status[1]} for status in statuses]
+        else:
+            package_dict["statuses"] = []
+        
+        package_list.append(package_dict)
+
+    connection.close()
+
+    return package_list
+"""
+@app.get("/packages", response_model=List[Package])
+
+def list_packages():
+    connection = get_db_connection()
+    cursor = connection.cursor()
+
+    packages = cursor.execute('''
+        SELECT p.package_id, p.place, p.good_id, g.name AS good_name, s.status AS status, s.status_time AS status_time
+        FROM Packages p
+        LEFT JOIN Goods g ON p.good_id = g.good_id,
+        LEFT JOIN Status s ON s.package_id = p.package_id
+    ''').fetchall()
+
+    package_list = []
+    for package in packages:
+        package_dict = {
+            "package_id": package[0],
+            "place": package[1],
+            "good_id": package[2],
+            "good_name": package[3],
+            "status": package[4],
+            "status_time": package[5]
+        }
+        
+        statuses = cursor.execute('''
+            SELECT status, status_time
+            FROM Status
+            WHERE package_id = ?
+            ORDER BY status_time DESC
+        ''', (package[0],)).fetchall()
+         
+
+        package_list.append(package_dict)
+
+    connection.close()
+
+    return package_list
+"""
 # Post goods 測試: insert 商品資料
 @app.post("/goods", response_model=Good)
 def create_good(good: Good):
