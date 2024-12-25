@@ -50,7 +50,7 @@ export async function placeOrder(productId: number): Promise<string> {
   
   packagesDatabase.push(newPackage)
   */
-  await createpackage(packageId, 4) 
+  await createpackage(packageId, 5) 
 
   return packageId
 }

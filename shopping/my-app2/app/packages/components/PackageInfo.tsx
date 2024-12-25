@@ -2,6 +2,7 @@ import { getPackageInfo } from '@/app/actions'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 //import { Badge } from "@/components/ui/badge"
 
+
 export async function PackageInfo({ searchParams }: { searchParams: { id?: string } }) {
   const packageId = searchParams?.id
 
@@ -10,6 +11,7 @@ export async function PackageInfo({ searchParams }: { searchParams: { id?: strin
   }
 
   const packageInfo = await getPackageInfo(packageId)
+
 
   if (!packageInfo) {
     return (
@@ -25,12 +27,12 @@ export async function PackageInfo({ searchParams }: { searchParams: { id?: strin
     <Card className="mt-8">
       <CardHeader>
         <CardTitle className="flex justify-between items-center">
-          <span>Package {packageInfo.id}</span>
-          <span variant={packageInfo.status === 'Delivered' ? 'success' : 'default'}>{packageInfo.status}</span>
+          <span>Package {packageInfo.package_id}</span>
+          <span>{packageInfo.status}</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-gray-500">Estimated Arrival: { new Date(Date.now()).toISOString().split('T')[0]}</p>
+        <p className="text-sm text-gray-500">Time: {packageInfo.status_time.split('T')[0]}</p>
         <p className="text-sm text-gray-500 mt-2">Current Location: {packageInfo.place}</p>
       </CardContent>
     </Card>

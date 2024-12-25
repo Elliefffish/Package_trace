@@ -4,6 +4,8 @@ import sqlite3
 from typing import List, Optional
 from datetime import datetime
 import uvicorn
+from update_status import update_package_periodically 
+import threading
 
 # 初始化 FastAPI 應用
 app = FastAPI()
@@ -72,11 +74,14 @@ def create_package(package: Package):
             (package.package_id, package.status_id)
         )
         connection.commit()
+        thread = threading.Thread(target=update_package_periodically, args=(package.package_id, 1))
+        thread.start()
     except sqlite3.IntegrityError:
         raise HTTPException(status_code=400, detail="Order ID already exists.")
     finally:
         connection.close()
     return package
+
 '''
 {
     "status": "送達",
@@ -92,7 +97,6 @@ def update_status(status: Status):
         cursor.execute("SELECT 1 FROM Packages WHERE package_id = ?", (status.package_id,))
         if not cursor.fetchone():
             raise HTTPException(status_code=404, detail="Package ID not found.")
-
         # insert new status
         cursor.execute(
             "INSERT INTO Status (status, package_id) VALUES (?, ?)",(status.status,status.package_id))

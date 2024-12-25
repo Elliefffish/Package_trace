@@ -74,7 +74,7 @@ export async function createpackage(package_id: number, status_id:number
   return response.json();
 }
 
-export async function getpackages(id: string): Promise<Package[]> {
+export async function getpackages(id: string): Promise<Package> {
   // Replace this with an actual API call to your server
   /*
   return [
