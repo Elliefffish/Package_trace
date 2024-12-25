@@ -13,14 +13,14 @@ class Package(BaseModel):
     # 訂單編號
     package_id: Optional[int] = None
     # 取貨門市
-    place: str
+    #place: str
     # 狀態
-    status_id: int
+    status_id: Optional[int] = None
     # 狀態時間
     status_time: Optional[datetime] = None
 
-    good_id: Optional[int] = None
-    good_name: Optional[str] = None
+    #good_id: Optional[int] = None
+    #good_name: Optional[str] = None
 
 class Good(BaseModel):
     # 商品編號
@@ -35,14 +35,18 @@ class Good(BaseModel):
     description: str
 
 class Status(BaseModel):
-    status_id: Optional[int] = None
+    #status_id: Optional[int] = None
     status_id: int
-    status_time: Optional[datetime] = None
-    package_id: int
+    status: str
+    #status_time: Optional[datetime] = None
+    place: str
+    # package_id: int
 
 class PackageStatus(BaseModel):
-    package: Package
-    status: Status
+    package_id: int
+    place: Optional[str] = None
+    status: Optional[str] = None
+    status_time: Optional[datetime] = None
 
 # connect sqlite
 def get_db_connection():
@@ -50,11 +54,11 @@ def get_db_connection():
     connection.row_factory = sqlite3.Row
     return connection
 
-# Post packages 測試: insert 包裹資料i
+# Post packages 測試: insert 包裹資料
 '''
 {
-    "place": "A",
-    "good_id": 1 
+    "package_id": 1234,
+    "status_id": 1 
 }
 '''
 @app.post("/packages", response_model=Package)
@@ -64,8 +68,8 @@ def create_package(package: Package):
     try:
         cursor.execute(
             # first column : id -> auto
-            "INSERT INTO Packages (place, good_id) VALUES (?, ?)",
-            (package.place, package.good_id)
+            "INSERT INTO Packages (package_id, status_id) VALUES (?, ?)",
+            (package.package_id, package.status_id)
         )
         connection.commit()
     except sqlite3.IntegrityError:
@@ -100,19 +104,27 @@ def update_status(status: Status):
     finally:
         connection.close()
     return status
-
-
+'''
+{
+    "package_id:"
+    "place":
+    "status":
+    "status_time"
+}
+'''
 # Get packages search
-@app.get("/packages/{package_id}", response_model=Package)
+@app.get("/packages/{package_id}", response_model=PackageStatus)
 def get_package(package_id: int):
     connection = get_db_connection()
     cursor = connection.cursor()
 
     package = cursor.execute('''
-        SELECT p.package_id, p.place, p.good_id, g.name AS good_name
+        SELECT p.package_id, s.place AS place, s.status AS status, p.status_time
         FROM Packages p
-        LEFT JOIN Goods g ON p.good_id = g.good_id
+        LEFT JOIN Status s ON p.status_id = s.status_id
         WHERE p.package_id = ?
+        ORDER BY p.status_time DESC
+        LIMIT 1
     ''', (package_id,)).fetchone()
 
     if package is None:
@@ -121,31 +133,10 @@ def get_package(package_id: int):
     package_dict = {
         "package_id": package[0],
         "place": package[1],
-        "good_id": package[2],
-        "good_name": package[3]
+        "status": package[2],
+        "status_time": package[3]
     }
 
-    statuses = cursor.execute('''
-        SELECT status, status_time
-        FROM Status
-        WHERE package_id = ?
-        ORDER BY status_time DESC
-    ''', (package_id, )).fetchall()
-
-    
-    if statuses:
-        package_dict["status"] = statuses[0][0]  
-        package_dict["status_time"] = statuses[0][1]  
-    else:
-        package_dict["status"] = None
-        package_dict["status_time"] = None
-    
-    '''
-    if statuses:
-        package_dict["statuses"] = [{"status": status[0], "status_time": status[1]} for status in statuses]
-    else:
-        package_dict["statuses"] = []
-    '''
     connection.close()
 
     return package_dict
