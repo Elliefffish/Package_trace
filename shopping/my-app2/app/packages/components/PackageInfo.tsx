@@ -1,4 +1,4 @@
-import { getPackageInfo } from '../../actions'
+import { getPackageInfo } from '@/app/actions'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 //import { Badge } from "@/components/ui/badge"
 
@@ -30,20 +30,8 @@ export async function PackageInfo({ searchParams }: { searchParams: { id?: strin
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-gray-500">Estimated Arrival: {packageInfo.estimatedArrival}</p>
-        <p className="text-sm text-gray-500 mt-2">Current Location: {packageInfo.currentLocation}</p>
-        <div className="mt-4">
-          <h3 className="text-sm font-medium text-gray-900">Status History</h3>
-          <ul className="mt-2 space-y-2">
-            {packageInfo.statusHistory.map((update, index) => (
-              <li key={index} className="text-sm">
-                <p className="font-semibold">{update.status}</p>
-                <p className="text-gray-500">{update.timestamp}</p>
-                <p className="text-gray-500">{update.location}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <p className="text-sm text-gray-500">Estimated Arrival: { new Date(Date.now()).toISOString().split('T')[0]}</p>
+        <p className="text-sm text-gray-500 mt-2">Current Location: {packageInfo.place}</p>
       </CardContent>
     </Card>
   )

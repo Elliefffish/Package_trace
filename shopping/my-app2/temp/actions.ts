@@ -1,9 +1,8 @@
 'use server'
 
-//import { Package, StatusUpdate } from './types'
-import { createpackage, getpackages } from '@/lib/api'
-import { Package } from '@/lib/api'
-/*const packagesDatabase: Package[] = [
+import { Package, StatusUpdate } from './types'
+
+const packagesDatabase: Package[] = [
   {
     id: 'PKG001',
     status: 'In Transit',
@@ -25,33 +24,12 @@ import { Package } from '@/lib/api'
       { status: 'In Transit', timestamp: '2023-05-13 20:00', location: 'Distribution Center, San Francisco' },
     ],
   },
-]*/
+]
 
 export async function getPackageInfo(id: string): Promise<Package | null> {
   // In a real application, you would fetch this data from an API or database
-  //const packageInfo = packagesDatabase.find(pkg => pkg.id === id)
-  const packageInfo = await getpackages(id)
+  const packageInfo = packagesDatabase.find(pkg => pkg.id === id)
   return packageInfo || null
 }
 
-export async function placeOrder(productId: number): Promise<string> {
-  // In a real application, you would create an order in the database
-  // and generate a real package ID
-  const packageId = `PKG${Math.floor(1000 + Math.random() * 9000)}`     
-  /*const newPackage: Package = {
-    id: packageId,
-    status: 'Processing',
-    estimatedArrival: new Date(Date.now()).toISOString().split('T')[0],
-    currentLocation: 'Order Processing Center',
-    statusHistory: [
-      { status: 'Processing', timestamp: new Date().toISOString(), location: 'Order Processing Center' },
-    ],
-  }
-  
-  packagesDatabase.push(newPackage)
-  */
-  await createpackage(packageId, 4) 
-
-  return packageId
-}
 

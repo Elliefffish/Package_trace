@@ -6,13 +6,17 @@ type Goods = {
   description: string
 
 }
-
 type Package = {
   package_id: number
   place: string
   status: string
   status_time: string
-  good_id: number
+}
+type Status = {
+    status_id: number
+    status:  string
+    status_time:  string
+    package_id: number
 }
 
 // 變數
@@ -39,7 +43,8 @@ export async function getGoods(): Promise<Goods[]> {
   return response.json();
 }
 
-export async function createpackage(good_id: number, status:string, place: string): Promise<Package> {
+export async function createpackage(package_id: number, status_id:number
+				   ): Promise<Package> {
   // Replace this with an actual API call to your server
   /*
   const product = await getProducts().then(products => products.find(p => p.id === productId))
@@ -57,17 +62,19 @@ export async function createpackage(good_id: number, status:string, place: strin
   const response = await fetch( api + 'packages', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ place, status, good_id }),
+    body: JSON.stringify({ package_id, status_id }),
   });
 
-  if (!response.ok) {
+   if (!response.ok) {
+    //const errorDetails = await response.json();
+    //console.error("Error details:", errorDetails);
     throw new Error(`Failed to create order: ${response.statusText}`);
   }
 
   return response.json();
 }
 
-export async function getpackages(): Promise<Package[]> {
+export async function getpackages(id: string): Promise<Package[]> {
   // Replace this with an actual API call to your server
   /*
   return [
@@ -90,7 +97,7 @@ export async function getpackages(): Promise<Package[]> {
   ]
   */
 
-  const response = await fetch( api + 'packages', {
+  const response = await fetch( api + 'packages/'+id , {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   });
@@ -103,4 +110,18 @@ export async function getpackages(): Promise<Package[]> {
 
 }
 
+export async function getstatus(): Promise<Status[]> {
+
+  const response = await fetch( api + 'packages', {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch orders: ${response.statusText}`);
+  }
+
+  return response.json();
+
+}
 
