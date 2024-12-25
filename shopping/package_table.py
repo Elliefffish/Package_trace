@@ -15,11 +15,8 @@ def create_db():
   # Create Package table
   c.execute('''CREATE TABLE IF NOT EXISTS Packages(
       package_id VARCHAR(128),
-      status_id INTEGER PRIMARY KEY,
+      status_id INTEGER,
       status_time DATETIME DEFAULT (datetime('now', 'localtime')),
-      -- place VARCHAR(128) NOT NULL,
-      -- status VARCHAR(64) NOT NULL,
-      -- status_time DATETIME DEFAULT (datetime('now', 'localtime')),
       FOREIGN KEY (status_id) REFERENCES Status(status_id)
   )''')
 
