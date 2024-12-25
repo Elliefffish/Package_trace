@@ -15,7 +15,7 @@ class Package(BaseModel):
     # 取貨門市
     place: str
     # 狀態
-    status: Optional[str] = None
+    status_id: int
     # 狀態時間
     status_time: Optional[datetime] = None
 
@@ -36,7 +36,7 @@ class Good(BaseModel):
 
 class Status(BaseModel):
     status_id: Optional[int] = None
-    status: str
+    status_id: int
     status_time: Optional[datetime] = None
     package_id: int
 
