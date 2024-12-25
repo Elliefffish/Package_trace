@@ -11,7 +11,7 @@ app = FastAPI()
 # model
 class Package(BaseModel):
     # 訂單編號
-    package_id: Optional[int] = None
+    package_id: Optional[str] = None
     # 取貨門市
     #place: str
     # 狀態
@@ -43,7 +43,7 @@ class Status(BaseModel):
     # package_id: int
 
 class PackageStatus(BaseModel):
-    package_id: int
+    package_id: str
     place: Optional[str] = None
     status: Optional[str] = None
     status_time: Optional[datetime] = None
@@ -114,7 +114,7 @@ def update_status(status: Status):
 '''
 # Get packages search
 @app.get("/packages/{package_id}", response_model=PackageStatus)
-def get_package(package_id: int):
+def get_package(package_id: str):
     connection = get_db_connection()
     cursor = connection.cursor()
 
